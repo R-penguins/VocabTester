@@ -102,6 +102,7 @@ let data = [];
 let curQuestion = 0;
 let wrongNumber = 0;
 let wrongIndex = [];
+let state = "init"; // "init", "question", "answer", "finish"
 
 function shuffle(a) {
     for (let i = a.length - 1; i > 0; i--) {
@@ -112,11 +113,13 @@ function shuffle(a) {
 }
 
 function newQuestion() {
+	state = "question";
 	document.querySelector("#showAnswer").style.display = "block";
 	document.querySelector("#contents-csv").innerHTML = data[curQuestion][0];
 }
 
 function showAnswer() {
+	state = "answer";
 	document.querySelector("#answer").innerHTML = data[curQuestion][1];
 	document.querySelector("#answer").style.display = "block";
 	document.querySelector("#showAnswer").style.display = "none";
@@ -147,6 +150,7 @@ function wrongAnswer() {
 }
 
 function finish() {
+	state = "finish";
 	document.querySelector("#contents-csv").innerHTML = "" + (data.length - wrongNumber) + " / " + data.length;
 	if (wrongNumber === 0) {
 		return;
@@ -159,25 +163,25 @@ function finish() {
 }
 
 document.addEventListener("keyup", event => {
-  if ((event.isComposing || event.keyCode === 32) && document.querySelector("#showAnswer").style.display === "block") {
+  if ((event.isComposing || event.keyCode === 32) && state === "question") {
     document.querySelector("#showAnswer").click();
   }
 });
 
 document.addEventListener("keyup", event => {
-  if ((event.isComposing || event.keyCode === 13) && document.querySelector("#file-input-csv").style.display === "block") {
+  if ((event.isComposing || event.keyCode === 13) && state === "init") {
     document.querySelector("#file-input-csv").click();
   }
 });
 
 document.addEventListener("keyup", event => {
-  if ((event.isComposing || event.keyCode === 49) && document.querySelector("#hit").style.display === "block") {
+  if ((event.isComposing || event.keyCode === 49) && state === "answer") {
     document.querySelector("#hit").click();
   }
 });
 
 document.addEventListener("keyup", event => {
-  if ((event.isComposing || event.keyCode === 48) && document.querySelector("#miss").style.display === "block") {
+  if ((event.isComposing || event.keyCode === 48) && state === "answer") {
     document.querySelector("#miss").click();
   }
 });
