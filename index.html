@@ -50,6 +50,11 @@ body {
 	color: white;
 }
 
+#start {
+	background-color: green;
+	margin: 30px auto;
+}
+
 #hit {
 	background-color: green;
 }
@@ -85,9 +90,12 @@ body {
 
 <progress id="progress" max="100" value="0"></progress>
 <div id="demo-container-csv" class="demo-container">
-	<label for="file-input-csv" id="file-input-label-csv" class="file-input-label">Load CSV File (ENTER↲)</label>
+	<label for="file-input-csv" id="file-input-label-csv" class="file-input-label">Load CSV File (L)</label>
 	<input type="file" id="file-input-csv" accept=".csv" class="file-input"/>
+	<div id="fileName" class="contents"></div>
 	<div id="file-progress-container-csv" class="file-progress-container"><span id="file-progress-percent-csv"></span>% read</div>
+	<button id="start" onclick="start()" class="result-button">Start (ENTER↲)</button>
+
 	<div id="contents-csv" class="contents"></div>
 	<div id="answer" class="contents"></div>
 	<button id="showAnswer" onclick="showAnswer()">Show Answer (SPACE)</button>
@@ -100,6 +108,7 @@ body {
 let data = [];
 let curQuestion = 0;
 let wrongNumber = 0;
+let totalNumber = 0;
 let wrongIndex = [];
 let state = "init"; // "init", "question", "answer", "finish"
 
@@ -109,6 +118,20 @@ function shuffle(a) {
         [a[i], a[j]] = [a[j], a[i]];
     }
     return a;
+}
+
+function start() {
+	document.querySelector("#start").style.display = 'none';
+	document.querySelector("#fileName").style.display = 'none';
+	document.querySelector("#contents-csv").style.display = 'block';
+	document.querySelector("#progress").style.display = 'block';
+	document.querySelector("#progress").max = data.length;
+	document.querySelector("#file-input-label-csv").style.display = 'none';
+	shuffle(data);
+	curQuestion = 0;
+	wrongNumber = 0;
+	totalNumber = 0;
+	newQuestion();
 }
 
 function newQuestion() {
@@ -131,6 +154,7 @@ function correctAnswer() {
 	document.querySelector("#miss").style.display = "none";
 	document.querySelector("#answer").style.display = "none";
 	++curQuestion;
+	++totalNumber;
 	document.querySelector("#progress").value = curQuestion;
 	if (curQuestion >= data.length) {
 		finish();
@@ -142,15 +166,17 @@ function correctAnswer() {
 function wrongAnswer() {
 	++wrongNumber;
 	wrongIndex.push(curQuestion);
-	if (wrongNumber === 5) {
-		alert("☹You got 5 wrong. Take it again?")
+	if (wrongNumber === 15) {
+		alert("☹You got 15 wrong. Take it again?")
 	}
 	correctAnswer();
 }
 
 function finish() {
 	state = "finish";
-	document.querySelector("#contents-csv").innerHTML = "" + (data.length - wrongNumber) + " / " + data.length;
+	document.querySelector("#showAnswer").style.display = "none";
+	const accuracy = Math.round((totalNumber - wrongNumber) / totalNumber * 100);
+	document.querySelector("#contents-csv").innerHTML = "" + (totalNumber - wrongNumber) + " / " + totalNumber + " = " + accuracy + "%";
 	if (wrongNumber === 0) {
 		return;
 	}
@@ -165,23 +191,20 @@ document.addEventListener("keyup", event => {
   if ((event.isComposing || event.keyCode === 32) && state === "question") {
     document.querySelector("#showAnswer").click();
   }
-});
-
-document.addEventListener("keyup", event => {
-  if ((event.isComposing || event.keyCode === 13) && state === "init") {
-    document.querySelector("#file-input-csv").click();
+  if ((event.isComposing || event.keyCode === 76) && (state === "init" || state === "ready")) {
+	document.querySelector("#file-input-csv").click();
   }
-});
-
-document.addEventListener("keyup", event => {
+  if ((event.isComposing || event.keyCode === 13) && state === "ready") {
+	document.querySelector("#start").click();
+  }
   if ((event.isComposing || event.keyCode === 49) && state === "answer") {
-    document.querySelector("#hit").click();
+	document.querySelector("#hit").click();
   }
-});
-
-document.addEventListener("keyup", event => {
   if ((event.isComposing || event.keyCode === 48) && state === "answer") {
-    document.querySelector("#miss").click();
+	document.querySelector("#miss").click();
+  }
+  if ((event.isComposing || event.keyCode === 27) && (state === "answer" || state === "question")) { // ESC
+	finish();
   }
 });
 
@@ -194,7 +217,8 @@ document.querySelector("#file-input-csv").addEventListener('change', function() 
 	}
 
 	// first file selected by user
-	var file = all_files[0];
+	let file = all_files[0];
+	let name = file.name;
 
 	// Max 2 MB allowed
 	var max_size_allowed = 2*1024*1024
@@ -228,6 +252,9 @@ document.querySelector("#file-input-csv").addEventListener('change', function() 
 
 	// file reading finished successfully
 	reader.addEventListener('load', function(e) {
+		state = "init";
+		document.querySelector("#start").style.display = 'none'; 
+		document.querySelector("#fileName").style.display = 'none'; 
 	    document.querySelector("#file-input-label-csv").style.display = 'block'; 
 
 		data = [];
@@ -240,15 +267,14 @@ document.querySelector("#file-input-csv").addEventListener('change', function() 
 			}
 		}
 
-	    // contents of the file
-	    document.querySelector("#contents-csv").style.display = 'block';
-	    document.querySelector("#progress").style.display = 'block';
-	    document.querySelector("#progress").max = data.length;
-	    document.querySelector("#file-input-label-csv").style.display = 'none';
-		shuffle(data);
-		curQuestion = 0;
-		wrongNumber = 0;
-		newQuestion();
+		if (data.length < 1) {
+			alert("File not valid");
+		} else {
+			state = "ready";
+			document.querySelector("#fileName").innerHTML = name + ": " + data.length + " items loaded.";
+			document.querySelector("#fileName").style.display = "block";
+			document.querySelector("#start").style.display = 'block'; 
+		}
 	});
 
 	// read as text file
