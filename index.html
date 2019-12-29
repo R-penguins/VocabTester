@@ -159,25 +159,25 @@ function finish() {
 }
 
 document.addEventListener("keyup", event => {
-  if ((event.isComposing || event.keyCode === 32) && document.querySelector("#showAnswer").style.display !== "none") {
+  if ((event.isComposing || event.keyCode === 32) && document.querySelector("#showAnswer").style.display === "block") {
     document.querySelector("#showAnswer").click();
   }
 });
 
 document.addEventListener("keyup", event => {
-  if ((event.isComposing || event.keyCode === 13) && document.querySelector("#file-input-csv").style.display !== "none") {
+  if ((event.isComposing || event.keyCode === 13) && document.querySelector("#file-input-csv").style.display === "block") {
     document.querySelector("#file-input-csv").click();
   }
 });
 
 document.addEventListener("keyup", event => {
-  if ((event.isComposing || event.keyCode === 49) && document.querySelector("#hit").style.display !== "none") {
+  if ((event.isComposing || event.keyCode === 49) && document.querySelector("#hit").style.display === "block") {
     document.querySelector("#hit").click();
   }
 });
 
 document.addEventListener("keyup", event => {
-  if ((event.isComposing || event.keyCode === 48) && document.querySelector("#miss").style.display !== "none") {
+  if ((event.isComposing || event.keyCode === 48) && document.querySelector("#miss").style.display === "block") {
     document.querySelector("#miss").click();
   }
 });
