@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+<style type="text/css">
+
+body {
+	margin: 0;
+	background-color: burlywood;
+}
+
+#progress {
+	margin: 5% 10%;
+	width: 80%;
+	display: none;
+}
+
+.demo-container {
+	text-align: center;
+	margin: 40px auto;
+}
+
+.file-input-label {
+	width: 200px;
+	cursor: pointer;
+	background-color: #336699;
+	color: white;
+	padding: 10px;
+	display: block;
+	margin: 0 auto;
+}
+
+#showAnswer {
+	width: 200px;
+	cursor: pointer;
+	background-color: #336699;
+	color: white;
+	padding: 10px;
+	display: none;
+	margin: 0 auto;
+}
+
+.result-button {
+	width: 200px;
+	cursor: pointer;
+	padding: 10px;
+	display: none;
+	margin: 10px auto;
+	color: white;
+}
+
+#hit {
+	background-color: green;
+}
+
+#miss {
+	background-color: red;
+}
+
+.file-input {
+	display: none;
+}
+
+.file-progress-container {
+	display: none;
+	margin: 15px 0 0 0;
+}
+
+.contents {
+	margin: 15px 15%;
+	display: none;
+	text-align: center;
+	background-color: rgba(0,0,0,0.1);
+	padding: 10px;
+	font-size: 16px;
+	max-height: 300px;
+	overflow: auto;
+	white-space: pre-wrap;
+}
+
+</style>
+</head>
+
+<body>
+
+<progress id="progress" max="100" value="0"></progress>
+<div id="demo-container-csv" class="demo-container">
+	<label for="file-input-csv" id="file-input-label-csv" class="file-input-label">Load CSV File (ENTER↲)</label>
+	<input type="file" id="file-input-csv" accept=".csv" class="file-input"/>
+	<div id="file-progress-container-csv" class="file-progress-container"><span id="file-progress-percent-csv"></span>% read</div>
+	<div id="contents-csv" class="contents"></div>
+	<div id="answer" class="contents"></div>
+	<button id="showAnswer" onclick="showAnswer()">Show Answer (SPACE)</button>
+	<button id="hit" class="result-button" onclick="correctAnswer()">✔ (1)</button>
+	<button id="miss" class="result-button" onclick="wrongAnswer()">❌ (0)</button>
+</div>
+
+<script>
+
+let data = [];
+let curQuestion = 0;
+let wrongNumber = 0;
+let wrongIndex = [];
+
+function shuffle(a) {
+    for (let i = a.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+}
+
+function newQuestion() {
+	document.querySelector("#showAnswer").style.display = "block";
+	document.querySelector("#contents-csv").innerHTML = data[curQuestion][0];
+}
+
+function showAnswer() {
+	document.querySelector("#answer").innerHTML = data[curQuestion][1];
+	document.querySelector("#answer").style.display = "block";
+	document.querySelector("#showAnswer").style.display = "none";
+	document.querySelector("#hit").style.display = "block";
+	document.querySelector("#miss").style.display = "block";
+}
+
+function correctAnswer() {
+	document.querySelector("#hit").style.display = "none";
+	document.querySelector("#miss").style.display = "none";
+	document.querySelector("#answer").style.display = "none";
+	++curQuestion;
+	document.querySelector("#progress").value = curQuestion;
+	if (curQuestion >= data.length) {
+		finish();
+	} else {
+		newQuestion();
+	}
+}
+
+function wrongAnswer() {
+	++wrongNumber;
+	wrongIndex.push(curQuestion);
+	if (wrongNumber === 5) {
+		alert("☹You got 5 wrong. Take it again?")
+	}
+	correctAnswer();
+}
+
+function finish() {
+	document.querySelector("#contents-csv").innerHTML = "" + (data.length - wrongNumber) + " / " + data.length;
+	if (wrongNumber === 0) {
+		return;
+	}
+	let wrongs = "";
+	wrongIndex.forEach(element => wrongs += (data[element] + '\n'));
+	document.querySelector("#answer").innerHTML = wrongs;
+	document.querySelector("#answer").style.textAlign = "left";
+	document.querySelector("#answer").style.display = "block";
+}
+
+document.addEventListener("keyup", event => {
+  if ((event.isComposing || event.keyCode === 32) && document.querySelector("#showAnswer").style.display !== "none") {
+    document.querySelector("#showAnswer").click();
+  }
+});
+
+document.addEventListener("keyup", event => {
+  if ((event.isComposing || event.keyCode === 13) && document.querySelector("#file-input-csv").style.display !== "none") {
+    document.querySelector("#file-input-csv").click();
+  }
+});
+
+document.addEventListener("keyup", event => {
+  if ((event.isComposing || event.keyCode === 49) && document.querySelector("#hit").style.display !== "none") {
+    document.querySelector("#hit").click();
+  }
+});
+
+document.addEventListener("keyup", event => {
+  if ((event.isComposing || event.keyCode === 48) && document.querySelector("#miss").style.display !== "none") {
+    document.querySelector("#miss").click();
+  }
+});
+
+document.querySelector("#file-input-csv").addEventListener('change', function() {
+	// files that user has chosen
+	var all_files = this.files;
+	if(all_files.length == 0) {
+		alert('Error : No file selected');
+		return;
+	}
+
+	// first file selected by user
+	var file = all_files[0];
+
+	// Max 2 MB allowed
+	var max_size_allowed = 2*1024*1024
+	if(file.size > max_size_allowed) {
+		alert('Error : Exceeded size 2MB');
+		return;
+	}
+
+	// file validation is successfull
+	// we will now read the file
+
+	let reader = new FileReader();
+
+	// file reading started
+	reader.addEventListener('loadstart', function() {
+	    document.querySelector("#file-input-label-csv").style.display = 'none'; 
+	});
+
+	// file read progress 
+	reader.addEventListener('progress', function(e) {
+	    if(e.lengthComputable == true) {
+	    	document.querySelector("#file-progress-percent-csv").innerHTML = Math.floor((e.loaded/e.total)*100);
+	    	document.querySelector("#file-progress-percent-csv").style.display = 'block';
+	    }
+	});
+
+	// file reading failed
+	reader.addEventListener('error', function() {
+	    alert('Error : Failed to read file');
+	});
+
+	// file reading finished successfully
+	reader.addEventListener('load', function(e) {
+	    document.querySelector("#file-input-label-csv").style.display = 'block'; 
+
+		data = [];
+		let text = e.target.result;
+		let rows = text.split("\r\n");
+		for (let i = 0; i < rows.length; i++) {
+			let row_columns = rows[i].split(",");
+			if (row_columns.length >= 2) {
+				data.push(row_columns);
+			}
+		}
+
+	    // contents of the file
+	    document.querySelector("#contents-csv").style.display = 'block';
+	    document.querySelector("#progress").style.display = 'block';
+	    document.querySelector("#progress").max = data.length;
+	    document.querySelector("#file-input-label-csv").style.display = 'none';
+		shuffle(data);
+		curQuestion = 0;
+		wrongNumber = 0;
+		newQuestion();
+	});
+
+	// read as text file
+	reader.readAsText(file);
+});
+
+</script>
+
+</body>
+</html>
